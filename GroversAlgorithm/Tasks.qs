@@ -48,7 +48,8 @@ namespace Quantum.Kata.GroversAlgorithm {
     //       If the query register is in state |11...1⟩, flip the target qubit.
     //       If the query register is in state (|00...0⟩ + |11...1⟩) / sqrt(2), and the target is in state |0⟩,
     //       the joint state of the query register and the target qubit should be (|00...00⟩ + |11...11⟩) / sqrt(2).
-    operation Oracle_AllOnes (queryRegister : Qubit[], target : Qubit) : Unit is Adj {
+    operation Oracle_AllOnes (queryRegister : Qubit[], target : Qubit) : Unit 
+    is Adj {
         
         // ...
     }
