@@ -43,6 +43,12 @@ namespace Quantum.Kata.GroversAlgorithm {
         
         // iterate over elements in odd positions (indexes are 0-based)
         ApplyToEachA(X, register[1..2...]);
+
+        // ApplyToEach is a library routine that is equivalent to the following code:
+        // let nQubits = Length(register);
+        // for (idxQubit in 0..nQubits - 1) {
+        //     H(register[idxQubit]);
+        // }
     }
     
     
@@ -87,12 +93,6 @@ namespace Quantum.Kata.GroversAlgorithm {
     is Adj {
         
         ApplyToEachA(H, register);
-
-        // ApplyToEach is a library routine that is equivalent to the following code:
-        // let nQubits = Length(register);
-        // for (idxQubit in 0..nQubits - 1) {
-        //     H(register[idxQubit]);
-        // }
     }
     
     
