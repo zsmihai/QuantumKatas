@@ -27,7 +27,7 @@ namespace Quantum.Kata.GroversAlgorithm {
     // ------------------------------------------------------
     // helper wrapper to test for operation equality on various register sizes
     operation AssertRegisterOperationsEqual (testOp : (Qubit[] => Unit), refOp : (Qubit[] => Unit is Adj)) : Unit {
-        for (n in 2 .. 10) {
+        for (n in 3 .. 10) {
             AssertOperationsEqualReferenced(n, testOp, refOp);
         }
     }

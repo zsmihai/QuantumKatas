@@ -42,9 +42,7 @@ namespace Quantum.Kata.GroversAlgorithm {
     is Adj {
         
         // iterate over elements in odd positions (indexes are 0-based)
-        for (i in 1 .. 2 .. Length(register) - 1) {
-            X(register[i]);
-        }
+        ApplyToEachA(X, register[1..2...]);
     }
     
     
