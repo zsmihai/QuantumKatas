@@ -30,27 +30,16 @@ namespace Quantum.Kata.GroversAlgorithm {
     operation Oracle_AlternatingBits_Reference (queryRegister : Qubit[], target : Qubit) : Unit
     is Adj {
 
-        // flip the bits in odd (0-based positions),
-        // so that the condition for flipping the state of the target qubit is "query register is in 1...1 state"
-        FlipOddPositionBits_Reference(queryRegister);
-        Controlled X(queryRegister, target);
-        Adjoint FlipOddPositionBits_Reference(queryRegister);
+        within {
+            // Flip the bits in odd (0-based positions),
+            // so that the condition for flipping the state of the target qubit is "query register is in 1...1 state".
+            // This transformation will be automatically undone after the apply-block below. 
+            ApplyToEachA(X, queryRegister[1..2...]);
+        } apply {
+            Oracle_AllOnes(queryRegister, target);
+        }
     }
-    
-    
-    operation FlipOddPositionBits_Reference (register : Qubit[]) : Unit
-    is Adj {
-        
-        // iterate over elements in odd positions (indexes are 0-based)
-        ApplyToEachA(X, register[1..2...]);
-
-        // ApplyToEach is a library routine that is equivalent to the following code:
-        // let nQubits = Length(register);
-        // for (idxQubit in 0..nQubits - 1) {
-        //     H(register[idxQubit]);
-        // }
-    }
-    
+       
     
     // Task 1.3. Arbitrary bit pattern oracle
     operation Oracle_ArbitraryPattern_Reference (queryRegister : Qubit[], target : Qubit, pattern : Bool[]) : Unit
@@ -64,17 +53,15 @@ namespace Quantum.Kata.GroversAlgorithm {
     is Adj {
         
         using (target = Qubit()) {
-            // Put the target into the |-⟩ state
-            X(target);
-            H(target);
-                
-            // Apply the marking oracle; since the target is in the |-⟩ state,
-            // flipping the target if the register satisfies the oracle condition will apply a -1 factor to the state
-            markingOracle(register, target);
-                
-            // Put the target back into |0⟩ so we can return it
-            H(target);
-            X(target);
+            within {
+                // Put the target into the |-⟩ state
+                X(target);
+                H(target);            
+            } apply {
+                // Apply the marking oracle; since the target is in the |-⟩ state,
+                // flipping the target if the register satisfies the oracle condition will apply a -1 factor to the state
+                markingOracle(register, target);            
+            }                
         }
     }
     
@@ -110,29 +97,18 @@ namespace Quantum.Kata.GroversAlgorithm {
         
         adjoint self;
     }
-    
-    
-    operation PhaseFlip_ControlledZ (register : Qubit[]) : Unit {
-        
-        body (...) {
-            // Alternative solution, described at https://quantumcomputing.stackexchange.com/questions/4268/how-to-construct-the-inversion-about-the-mean-operator/4269#4269
-            ApplyToEachA(X, register);
-            Controlled Z(Most(register), Tail(register));
-            ApplyToEachA(X, register);
-        }
-        
-        adjoint self;
-    }
-    
+
     
     // Task 2.3. The Grover iteration
     operation GroverIteration_Reference (register : Qubit[], oracle : (Qubit[] => Unit is Adj)) : Unit
     is Adj {
         
         oracle(register);
-        HadamardTransform_Reference(register);
-        ConditionalPhaseFlip_Reference(register);
-        HadamardTransform_Reference(register);
+        within {
+            HadamardTransform_Reference(register);        
+        } apply {        
+            ConditionalPhaseFlip_Reference(register);
+        }
     }
     
     
