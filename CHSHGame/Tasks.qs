@@ -18,7 +18,8 @@ namespace Quantum.Kata.CHSHGame {
     // In it two players (Alice and Bob) try to win the following game: 
     // each of them is given a bit (Alice gets X and Bob gets Y), and
     // they have to return new bits (Alice returns A and Bob returns B)
-    // so that X ∧ Y = A ⊕ B. The trick is, they can not communicate during the game.
+    // so that X ∧ Y = A ⊕ B, where ∧ is the logical "AND" and ⊕ the 
+    // addition modulo 2. Alice and Bob can not communicate during the game.
 
     // Each task is wrapped in one operation preceded by the description of the task.
     // Each task has a unit test associated with it, which initially fails. 

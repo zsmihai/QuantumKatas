@@ -25,9 +25,8 @@ namespace Quantum.Kata.GraphColoring {
 
     // Task 1.1. Initialize register to a color
     operation InitializeColor_Reference (C : Int, register : Qubit[]) : Unit is Adj {
-        let N = Length(register);
         // Convert C to an array of bits in little endian format
-        let binaryC = IntAsBoolArray(C, N);
+        let binaryC = IntAsBoolArray(C, Length(register));
         // Value "true" corresponds to bit 1 and requires applying an X gate
         ApplyPauliFromBitString(PauliX, true, binaryC, register);
     }
@@ -153,31 +152,31 @@ namespace Quantum.Kata.GraphColoring {
     operation OracleConverterImpl (markingOracle : ((Qubit[], Qubit) => Unit is Adj), register : Qubit[]) : Unit is Adj {
 
         using (target = Qubit()) {
-            // Put the target into the |-⟩ state
-            X(target);
-            H(target);
-                
-            // Apply the marking oracle; since the target is in the |-⟩ state,
-            // flipping the target if the register satisfies the oracle condition will apply a -1 factor to the state
-            markingOracle(register, target);
-                
-            // Put the target back into |0⟩ so we can return it
-            H(target);
-            X(target);
+            within {
+                // Put the target into the |-⟩ state.
+                // This transformation will be undone after the apply-block terminates.
+                X(target);
+                H(target);            
+            } apply {
+                // Apply the marking oracle; since the target is in the |-⟩ state,
+                // flipping the target if the register satisfies the oracle condition will apply a -1 factor to the state
+                markingOracle(register, target);            
+            }                
         }
     }
     
     operation GroversAlgorithm_Loop (register : Qubit[], oracle : ((Qubit[], Qubit) => Unit is Adj), iterations : Int) : Unit {
         let phaseOracle = OracleConverterImpl(oracle, _);
-        ApplyToEach(H, register);
+        ApplyToEachA(H, register);
             
         for (i in 1 .. iterations) {
             phaseOracle(register);
-            ApplyToEach(H, register);
-            ApplyToEach(X, register);
-            Controlled Z(Most(register), Tail(register));
-            ApplyToEach(X, register);
-            ApplyToEach(H, register);
+            within {
+                ApplyToEachA(H, register);
+                ApplyToEachA(X, register);            
+            } apply {
+                Controlled Z(Most(register), Tail(register));            
+            }
         }
     }
 }

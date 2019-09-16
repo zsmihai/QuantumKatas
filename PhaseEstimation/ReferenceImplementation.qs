@@ -52,13 +52,16 @@ namespace Quantum.Kata.PhaseEstimation {
     // Task 1.3. Validate inputs to QPE
     operation AssertIsEigenstate_Reference (U : (Qubit => Unit), P : (Qubit => Unit is Adj)) : Unit {
         using (q = Qubit()) {
-            // Prepare the state |ψ⟩
-            P(q);
-            // Apply the given unitary
-            U(q);
-            // If the given state is an eigenstate, the current state of the qubit should be |ψ⟩ (up to a global phase).
-            // So un-preparing it should bring the state back to |0⟩
-            Adjoint P(q);
+            within {
+                // Prepare the state |ψ⟩.
+                // This transformation is automatically undone after the apply-block finishes. 
+                P(q);
+            } apply {
+                // Apply the given unitary
+                U(q);            
+            }
+            // If the given state is an eigenstate, the state of the qubit after the apply-block should be |ψ⟩ (up to a global phase).
+            // the automatic un-computation should thus have brought the state back to |0⟩
             AssertQubit(Zero, q);
         }
     }
@@ -86,8 +89,7 @@ namespace Quantum.Kata.PhaseEstimation {
             // Read out the phase
             let phase = IntAsDouble(MeasureInteger(BigEndianAsLittleEndian(phaseRegisterBE))) / IntAsDouble(1 <<< n);
 
-            ResetAll(eigenstate);
-            ResetAll(phaseRegister);
+            ResetAll(eigenstate + phaseRegister);
             return phase;
         }
     }

@@ -72,8 +72,7 @@ namespace Quantum.Kata.JointMeasurements {
             // Note the parity notation used in the table of fixups in the paper
             // differs from the notation used in Q#.
             using (a = Qubit()) {
-                let c = qs[0];
-                let t = qs[1];
+                let (c, t) = (qs[0], qs[1]);
                 H(a);
                 let p1 = MeasureAllZ([c, a]);
                 H(a);

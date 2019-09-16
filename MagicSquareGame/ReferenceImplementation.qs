@@ -119,9 +119,12 @@ namespace Quantum.Kata.MagicSquareGame {
     // Task 2.5. Measure an operator
     operation MeasureOperator_Reference (op : (Qubit[] => Unit is Ctl), target : Qubit[]) : Result {
         using (q = Qubit()) {
-            H(q);
-            Controlled op([q], target);
-            H(q);
+            within {
+                H(q);
+            }
+            apply {
+                Controlled op([q], target);
+            }
             return MResetZ(q);
         }
     }
