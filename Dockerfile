@@ -1,19 +1,28 @@
 # We use the iqsharp-base image, as that includes
 # the .NET Core SDK, IQ#, and Jupyter Notebook already
 # installed for us.
-FROM mcr.microsoft.com/quantum/iqsharp-base:0.11.2004.2414-beta
+FROM qdkimages.azurecr.io/internal/quantum/iqsharp-base:0.11.2004.2414
 
 # Add metadata indicating that this image is used for the katas.
 ENV IQSHARP_HOSTING_ENV=KATAS_DOCKERFILE
 
-# Make sure the contents of our repo are in ${HOME}
-# Required for mybinder.org
-COPY . ${HOME}
 USER root
 
 # Install Python dependencies for the Python visualization and tutorial notebooks
 RUN pip install "matplotlib"
 RUN pip install "pytest"
+
+# FOR THIS COMMAND TO SUCCEED:
+# Build iqsharp with this command:
+#    dotnet publish -r linux-x64 --no-self-contained
+# and copy the contents of `src/Tool/bin/Debug/netcoreapp3.1/linux-x64/publish`
+# into the `.iqsharp` folder... 
+RUN ${HOME}/.iqsharp/Microsoft.Quantum.IQSharp install --user --path-to-tool  ${HOME}/.iqsharp/Microsoft.Quantum.IQSharp -l Information
+
+
+# # Make sure the contents of our repo are in ${HOME}
+# # Required for mybinder.org
+COPY . ${HOME}
 
 RUN chown -R ${USER} ${HOME} && \
     chmod +x ${HOME}/scripts/*.sh

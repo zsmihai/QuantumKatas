@@ -90,6 +90,9 @@ $not_ready =
 
 $errors = $false
 
+$watch = new-object system.diagnostics.StopWatch
+$watch.Start()
+
 if ($Notebook -ne "") {
     # Validate only the notebook provided as the parameter (do not exclude blacklisted notebooks)
     Get-ChildItem $Notebook `
@@ -107,3 +110,6 @@ if (-not $all_ok) {
     Write-Host "##vso[task.logissue type=error;]Validation errors for Jupyter notebooks."
     throw "At least one test failed execution. Check the logs."
 }
+
+$watch.Stop()
+$watch.Elapsed.TotalMinutes
