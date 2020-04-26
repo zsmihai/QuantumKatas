@@ -1,3 +1,5 @@
+#!/bin/bash
+
 # prebuild-kata.sh <kata-folder> <kata-notebook>
 KATA_FOLDER=$1
 KATA_NOTEBOOK=${2:-$1.ipynb}
@@ -9,9 +11,9 @@ echo "Prebuilding: $KATA_NOTEBOOK in $KATA_FOLDER kata..."
 start=`date +%s`
 
 # All we need to do is import the qsharp package, this will take care of building the Workspace
-pushd $KATA_FOLDER
+cd $KATA_FOLDER
 python -c "import qsharp"
-popd
+cd ..
 
 end=`date +%s`
 
