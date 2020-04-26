@@ -12,6 +12,10 @@ USER root
 RUN pip install "matplotlib"
 RUN pip install "pytest"
 
+# # Make sure the contents of our repo are in ${HOME}
+# # Required for mybinder.org
+COPY . ${HOME}
+
 # FOR THIS COMMAND TO SUCCEED:
 # Build iqsharp with this command:
 #    dotnet publish -r linux-x64 --no-self-contained
@@ -19,15 +23,13 @@ RUN pip install "pytest"
 # into the `.iqsharp` folder... 
 RUN ${HOME}/.iqsharp/Microsoft.Quantum.IQSharp install --user --path-to-tool  ${HOME}/.iqsharp/Microsoft.Quantum.IQSharp -l Information
 
-
-# # Make sure the contents of our repo are in ${HOME}
-# # Required for mybinder.org
-COPY . ${HOME}
-
 RUN chown -R ${USER} ${HOME} && \
     chmod +x ${HOME}/scripts/*.sh
 
 USER ${USER}
+
+# Pre-build the BasicGates .Net version ot make sure all packages are loaded
+RUN dotnet build ${HOME}/BasicGates
 
 # Pre-exec notebooks to improve first-use start time
 RUN ${HOME}/scripts/prebuild-kata.sh BasicGates
@@ -48,8 +50,7 @@ RUN ${HOME}/scripts/prebuild-kata.sh SuperdenseCoding
 RUN ${HOME}/scripts/prebuild-kata.sh Superposition
 RUN ${HOME}/scripts/prebuild-kata.sh Teleportation
 RUN ${HOME}/scripts/prebuild-kata.sh TruthTables
-# Exclude Unitary patterns, since it times out in Binder prebuild
-# RUN ${HOME}/scripts/prebuild-kata.sh UnitaryPatterns
+RUN ${HOME}/scripts/prebuild-kata.sh UnitaryPatterns
 RUN ${HOME}/scripts/prebuild-kata.sh tutorials/ComplexArithmetic ComplexArithmetic.ipynb
 RUN ${HOME}/scripts/prebuild-kata.sh tutorials/ExploringDeutschJozsaAlgorithm DeutschJozsaAlgorithmTutorial.ipynb
 RUN ${HOME}/scripts/prebuild-kata.sh tutorials/ExploringGroversAlgorithm ExploringGroversAlgorithmTutorial.ipynb
