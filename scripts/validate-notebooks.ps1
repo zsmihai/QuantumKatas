@@ -69,47 +69,31 @@ function Validate {
         # Convert %kata to %check_kata to check the reference solutions
         (Get-Content $Notebook -Raw) | ForEach-Object { $_.replace('%kata', '%check_kata') } | Set-Content $CheckNotebook -NoNewline
     }
-    
-    try {
-        # Populate NuGet cache for this project
-        dotnet restore
 
-        # Clear NuGet package sources, since all required packages should be cached at this point
-        "<?xml version=""1.0"" encoding=""utf-8""?>
-            <configuration>
-                <packageSources>
-                    <clear />
-                </packageSources>
-            </configuration>
-        " | Out-File ./NuGet.Config -Encoding utf8
+    # Populate NuGet cache for this project
+    dotnet restore
 
-        # See the explanation for excluding individual tasks in Contribution guide at 
-        # https://github.com/microsoft/QuantumKatas/blob/main/.github/CONTRIBUTING.md#excluding-individual-tasks-from-validation
-        $exclude_from_validation = "['multicell_solution', 'randomized_solution', 'timeout', 'invalid_code', 'work_in_progress']"
+    # See the explanation for excluding individual tasks in Contribution guide at 
+    # https://github.com/microsoft/QuantumKatas/blob/main/.github/CONTRIBUTING.md#excluding-individual-tasks-from-validation
+    $exclude_from_validation = "['multicell_solution', 'randomized_solution', 'timeout', 'invalid_code', 'work_in_progress']"
 
-        # Run Jupyter nbconvert to execute the kata.
-        # dotnet-iqsharp writes some output to stderr, which causes PowerShell to throw
-        # unless $ErrorActionPreference is set to 'Continue'.
-        $ErrorActionPreference = 'Continue'
-        if ($env:SYSTEM_DEBUG -eq "true") {
-            # Redirect stderr output to stdout to prevent an exception being incorrectly thrown.
-            jupyter nbconvert $CheckNotebook --TagRemovePreprocessor.remove_cell_tags=$exclude_from_validation  --execute --to html --ExecutePreprocessor.timeout=300 --log-level=DEBUG 2>&1 | %{ "$_"}
-        } else {
-            # Redirect stderr output to stdout to prevent an exception being incorrectly thrown.
-            jupyter nbconvert $CheckNotebook --TagRemovePreprocessor.remove_cell_tags=$exclude_from_validation --execute --to html --ExecutePreprocessor.timeout=300 2>&1 | %{ "$_"}
-        }
-        $ErrorActionPreference = 'Stop'
-
-        # if Jupyter returns an error code, report that this notebook is invalid:
-        if ($LastExitCode -ne 0) {
-            Write-Host "##vso[task.logissue type=error;]Validation errors for $Notebook ."        
-            $script:all_ok = $false
-        }
+    # Run Jupyter nbconvert to execute the kata.
+    # dotnet-iqsharp writes some output to stderr, which causes PowerShell to throw
+    # unless $ErrorActionPreference is set to 'Continue'.
+    $ErrorActionPreference = 'Continue'
+    if ($env:SYSTEM_DEBUG -eq "true") {
+        # Redirect stderr output to stdout to prevent an exception being incorrectly thrown.
+        jupyter nbconvert $CheckNotebook --TagRemovePreprocessor.remove_cell_tags=$exclude_from_validation  --execute --to html --ExecutePreprocessor.timeout=300 --log-level=DEBUG 2>&1 | %{ "$_"}
+    } else {
+        # Redirect stderr output to stdout to prevent an exception being incorrectly thrown.
+        jupyter nbconvert $CheckNotebook --TagRemovePreprocessor.remove_cell_tags=$exclude_from_validation --execute --to html --ExecutePreprocessor.timeout=300 2>&1 | %{ "$_"}
     }
-    finally {
-        if (Test-Path ./NuGet.Config) {
-            Remove-Item ./NuGet.Config
-        }
+    $ErrorActionPreference = 'Stop'
+
+    # if Jupyter returns an error code, report that this notebook is invalid:
+    if ($LastExitCode -ne 0) {
+        Write-Host "##vso[task.logissue type=error;]Validation errors for $Notebook ."        
+        $script:all_ok = $false
     }
 
     popd
