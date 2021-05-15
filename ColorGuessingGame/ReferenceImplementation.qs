@@ -10,8 +10,8 @@ namespace Quantum.Kata.Mastermind {
     open Microsoft.Quantum.Convert;
     open Microsoft.Quantum.Diagnostics;
 
-    // Task 1.1: The Compare register to integer oracle
-    operation Task_1_1_CompareWithInteger_Reference(
+    // Task 1: The Compare register to integer oracle
+    operation Oracle_CompareWithInteger_Reference(
         qubits : LittleEndian,
         integer : Int,
         target : Qubit
@@ -21,8 +21,8 @@ namespace Quantum.Kata.Mastermind {
     }
 
 
-    // Task 1.2: Oracle check if 2 qubit registers are equal
-    operation Task_1_2_CompareRegistersOracle_Reference(
+    // Task 2: Oracle check if 2 qubit registers are equal
+    operation Oracle_CompareRegistersOracle_Reference(
         register1: LittleEndian,
         register2: LittleEndian,
         target: Qubit
@@ -36,9 +36,9 @@ namespace Quantum.Kata.Mastermind {
         }
     }
 
-    // Task 1.3: Check if a register is equal to an integer, and increment a counter if true
-    operation Task_1_3_CompareAndIncrement_Reference(
-        integerToBeCounted : Int,
+    // Task 3: Check if a register is equal to an integer, and increment a counter if true
+    operation CompareAndIncrement_Reference(
+        integerToBeCounted: Int,
         register: LittleEndian,
         counter: LittleEndian
     ) : Unit is Adj + Ctl
@@ -46,15 +46,76 @@ namespace Quantum.Kata.Mastermind {
         ControlledOnInt(integerToBeCounted, IncrementByInteger(1, _))(register!, counter);
     }
 
-    // Task 1.4: Count occurences of the state |integerToBeCounted> in a register array
-    operation Task_1_4_CountInArray_Reference(
-        integerToBeCounted : Int,
-        registerArray : LittleEndian[],
+    // Task 4: Count occurences of the state |integerToBeCounted> in a register array
+    operation CountInArray_Reference(
+        integerToBeCounted: Int,
+        registerArray: LittleEndian[],
         counter: LittleEndian
     ) : Unit is Adj + Ctl
     {
-        let forEachOperation = Task_1_3_CompareAndIncrement_Reference(integerToBeCounted, _, counter);
+        let forEachOperation = CompareAndIncrement_Reference(integerToBeCounted, _, counter);
         ApplyToEachCA(forEachOperation, registerArray);
+    }
+
+    // Task 5: Oracle for checking an expected count of exact matches
+    operation Oracle_CompareExactMatchCount_Reference(
+        registerArray : LittleEndian[],
+        expectedValues: Int[],
+        expectedMatchCount: Int,
+        target: Qubit
+    ) : Unit is Adj + Ctl
+    {
+        use counterQubits = Qubit[3]
+        {
+            let counter = LittleEndian(counterQubits);
+            within
+            {
+                for (expectedInteger, register) in Zipped(expectedValues, registerArray)
+                {
+                    CompareAndIncrement_Reference(expectedInteger, register, counter);
+                }
+            }
+            apply
+            {
+                ControlledOnInt(expectedMatchCount, X)(counter!, target);
+            }
+        }
+    }
+
+    // Task 6: Oracle for checking an expected count of partial matches
+    operation Oracle_ComparePartialMatchCount_Reference(
+        registerArray : LittleEndian[],
+        expectedValues: Int[],
+        expectedMatchCount: Int,
+        target: Qubit
+    ) : Unit is Adj + Ctl
+    {
+        use counterQubits = Qubit[4]
+        {
+            let counter = LittleEndian(counterQubits);
+            within
+            {
+                for i in 0..Length(registerArray) - 1
+                {
+                    use compareResult = Qubit()
+                    {
+                        within
+                        {
+                            Oracle_CompareWithInteger_Reference(registerArray[i], expectedValues[i], compareResult);
+                            X(compareResult);
+                        }
+                        apply
+                        {
+                            Controlled (CountInArray_Reference(expectedValues[i], registerArray, _))([compareResult], counter);
+                        }
+                    }
+                }
+            }
+            apply
+            {
+                ControlledOnInt(expectedMatchCount, X)(counter!, target);
+            }
+        }
     }
 
     //  The Mastermind game
@@ -67,57 +128,23 @@ namespace Quantum.Kata.Mastermind {
         let conditionColors = conditionValues[0..3];
         let expectedExactMatches = conditionValues[4];
         let expectedPartialMatches = conditionValues[5];
-        use counters = Qubit[7]
+    
+        use targets = Qubit[2]
         {
             within
             {
-                let exactCounter = LittleEndian(counters[0..2]);
-                let partialCounter = LittleEndian(counters[3..6]);
-
-                let guessesLength = Length(currentGuess);
-                for i in 0 .. guessesLength-1
-                {
-                    use checkEquality = Qubit()
-                    {
-                        within
-                        {
-                            Task_1_1_CompareWithInteger_Reference(currentGuess[i], conditionColors[i], checkEquality);
-                        }
-                        apply
-                        {
-                            // if it is an exact match, we count it
-                            Controlled (IncrementByInteger(1, _))([checkEquality], exactCounter);
-
-                            // if it is not an exact match, we count all occurences in the other registers
-                            X(checkEquality);
-                            Controlled (Task_1_4_CountInArray_Reference(conditionColors[i], currentGuess, _))([checkEquality], partialCounter);
-                            X(checkEquality);
-                        }
-                    }
-                }
+                Oracle_CompareExactMatchCount_Reference(currentGuess, conditionColors, expectedExactMatches, targets[0]);
+                Oracle_ComparePartialMatchCount_Reference(currentGuess, conditionColors, expectedPartialMatches, targets[1]);
             }
             apply
             {
-                let exactCounter = LittleEndian(counters[0..2]);
-                let partialCounter = LittleEndian(counters[3..6]);
-                use checkConditionQbits = Qubit[2]
-                {
-                    within
-                    {
-                        Task_1_1_CompareWithInteger_Reference(exactCounter, expectedExactMatches, checkConditionQbits[0]);
-                        Task_1_1_CompareWithInteger_Reference(partialCounter, expectedPartialMatches, checkConditionQbits[1]);
-                    }
-                    apply
-                    {
-                        Controlled X(checkConditionQbits, target);
-                    }
-                }
+                Controlled X(targets, target);
             }
         }
     }
 
-    // Task 1.6: Implement the Mastermind Check oracle for an array of conditions
-    operation Task_1_6_MastermindOracle_Reference(
+    // Task 6: Implement the Mastermind Check oracle for an array of conditions
+    operation MastermindOracle_Reference(
         currentGuess: LittleEndian[],
         conditions : Int[][],
         target: Qubit
@@ -149,7 +176,7 @@ namespace Quantum.Kata.Mastermind {
     {
         let registers = Chunks(2, qubitArray);
         let regLEs = Mapped(LittleEndian(_), registers);
-        Task_1_6_MastermindOracle_Reference(regLEs, conditions, target);
+        MastermindOracle_Reference(regLEs, conditions, target);
     }
 
 

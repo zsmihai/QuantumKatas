@@ -79,6 +79,28 @@ namespace Quantum.Kata.Mastermind {
         // ...
     }
 
+    // Task 5: Oracle for checking an expected count of exact matches
+    operation Oracle_CompareExactMatchCount(
+        registerArray : LittleEndian[],
+        expectedValues: Int[],
+        expectedMatchCount: Int,
+        target: Qubit
+    ) : Unit is Adj + Ctl
+    {
+        // ...
+    }
+
+    // Task 6: Oracle for checking an expected count of partial matches
+    operation Oracle_ComparePartialMatchCount(
+        registerArray : LittleEndian[],
+        expectedValues: Int[],
+        expectedMatchCount: Int,
+        target: Qubit
+    ) : Unit is Adj + Ctl
+    {
+        // ...
+    }
+
     // 
     //  The Mastermind game
     //  The purpose of the game is to guess a secret array of 4 integers; The integers encode colors, the possible colors are 0, 1, 2, 3
